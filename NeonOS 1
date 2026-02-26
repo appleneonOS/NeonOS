@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>NeonOS 2.5</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        :root {
+            --frame-color: #1a1a1a;
+            --screen-radius: 45px;
+            --button-size: 4px;
+        }
+
+        body {
+            background: #000;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        /* Phone Frame */
+        .phone-frame {
+            width: 380px;
+            height: 780px;
+            background: linear-gradient(145deg, #2a2a2a 0%, #1a1a1a 50%, #0a0a0a 100%);
+            border-radius: 55px;
+            padding: 12px;
+            box-shadow: 
+                0 0 0 2px #333,
+                0 0 0 4px #111,
+                0 20px 60px rgba(0,0,0,0.8),
+                inset 0 0 20px rgba(255,255,255,0.05);
+            position: relative;
+        }
+
+        /* Side Buttons */
+        .side-button {
+            position: absolute;
+            background: #1a1a1a;
+            border-radius: 2px;
+            box-shadow: inset 0 0 2px rgba(255,255,255,0.1);
+        }
+
+        .volume-up {
+            width: 4px;
+            height: 50px;
+            left: -4px;
+            top: 120px;
+            border-radius: 2px 0 0 2px;
+        }
+
+        .volume-down {
+            width: 4px;
+            height: 50px;
+            left: -4px;
+            top: 180px;
+            border-radius: 2px 0 0 2px;
+        }
+
+        .power-button {
+            width: 4px;
+            height: 70px;
+            right: -4px;
+            top: 150px;
+            border-radius: 0 2px 2px 0;
+        }
+
+        /* Screen */
+        .screen {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            border-radius: var(--screen-radius);
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        /* Notch */
+        .notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 30px;
+            background: #000;
+            border-radius: 0 0 20px 20px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .notch-camera {
+            width: 10px;
+            height: 10px;
+            background: radial-gradient(circle at 30% 30%, #1a1a2e 0%, #000 100%);
+            border-radius: 50%;
+            box-shadow: inset 0 0 2px rgba(255,255,255,0.2);
+        }
+
+        .notch-speaker {
+            width: 40px;
+            height: 4px;
+            background: #222;
+            border-radius: 2px;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            position: absolute;
+            top: 8px;
+            left: 20px;
+            right: 20px;
+            height: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            z-index: 999;
+        }
+
+        .status-left {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-right {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .signal-bars {
+            display: flex;
+            gap: 2px;
+            align-items: flex-end;
+            height: 11px;
+        }
+
+        .bar {
+            width: 3px;
+            background: white;
+            border-radius: 1px;
+        }
+
+        .bar:nth-child(1) { height: 4px; }
+        .bar:nth-child(2) { height: 6px; }
+        .bar:nth-child(3) { height: 8px; }
+        .bar:nth-child(4) { height: 10px; }
+
+        .battery {
+            width: 20px;
+            height: 10px;
+            border: 1.5px solid white;
+            border-radius: 3px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            padding: 1px;
+        }
+
+        .battery::after {
+            content: '';
+            position: absolute;
+            right: -3px;
+            width: 2px;
+            height: 4px;
+            background: white;
+            border-radius: 0 1px 1px 0;
+        }
+
+        .battery-fill {
+            width: 80%;
+            height: 100%;
+            background: white;
+            border-radius: 1px;
+        }
+
+        /* Lock Screen */
+        .lock-screen {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, #1e3c72 0%, #2a5298 50%, #6e48aa 100%);
+            z-index: 500;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 80px;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .lock-screen.unlocked {
+            transform: translateY(-100%);
+        }
+
+        .lock-time {
+            font-size: 72px;
+            font-weight: 200;
+            color: white;
+            margin-bottom: 5px;
+        }
+
+        .lock-date {
+            font-size: 18px;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 40px;
+        }
+
+        .lock-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .fingerprint-area {
+            width: 80px;
+            height: 80px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin-top: auto;
+            margin-bottom: 100px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .fingerprint-area:active {
+            transform: scale(0.95);
+            border-color: rgba(255,255,255,0.6);
+        }
+
+        .fingerprint-area.scanning {
+            animation: scan 1.5s ease;
+        }
+
+        @keyframes scan {
+            0% { border-color: rgba(255,255,255,0.3); box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+            50% { border-color: #34c759; box-shadow: 0 0 0 20px rgba(52,199,89,0); }
+            100% { border-color: rgba(255,255,255,0.3); box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+        }
+
+        .fingerprint-area.success {
+            border-color: #34c759;
+            background: rgba(52,199,89,0.2);
+        }
+
+        .fingerprint-text {
+            position: absolute;
+            bottom: -30px;
+            font-size: 12px;
+            opacity: 0.8;
+            white-space: nowrap;
+        }
+
+        .password-btn {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 20px;
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Password Screen */
+        .password-screen {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            z-index: 501;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .password-screen.show {
+            display: flex;
+        }
+
+        .password-title {
+            font-size: 20px;
+            margin-bottom: 30px;
+        }
+
+        .password-dots {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .password-dot {
+            width: 12px;
+            height: 12px;
+            border: 2px solid white;
+            border-radius: 50%;
+            transition: 0.2s;
+        }
+
+        .password-dot.filled {
+            background: white;
+        }
+
+        .password-pad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .password-key {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+
+        .password-key:active {
+            background: rgba(255,255,255,0.3);
+            transform: scale(0.95);
+        }
+
+        .password-key span {
+            font-size: 10px;
+            opacity: 0.6;
+            margin-top: 2px;
+        }
+
+        .password-cancel {
+            margin-top: 30px;
+            color: #0a84ff;
+            cursor: pointer;
+        }
+
+        /* Home Screen */
+        .home-screen {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            padding: 50px 20px 100px;
+            overflow-y: auto;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .home-screen.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .home-screen::-webkit-scrollbar {
+            display: none;
+        }
+
+        .home-time {
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .home-date {
+            text-align: center;
+            font-size: 15px;
+            opacity: 0.9;
+            margin-bottom: 30px;
+        }
+
+        .widget {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .weather-widget {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .weather-temp {
+            font-size: 40px;
+            font-weight: 300;
+        }
+
+        .weather-info {
+            text-align: right;
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .app-icon {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .app-icon:active {
+            transform: scale(0.9);
+        }
+
+        .icon-box {
+            width: 58px;
+            height: 58px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05));
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.25);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .edit-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            color: #000;
+            border-radius: 50%;
+            font-size: 10px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .edit-mode .edit-badge {
+            display: flex;
+        }
+
+        .edit-mode .app-icon {
+            animation: wiggle 0.25s infinite;
+        }
+
+        .edit-mode .app-icon:nth-child(even) {
+            animation-direction: reverse;
+        }
+
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(-2deg); }
+            50% { transform: rotate(2deg); }
+        }
+
+        .app-label {
+            font-size: 11px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+        }
+
+        /* Dock */
+        .dock {
+            position: absolute;
+            bottom: 30px;
+            left: 15px;
+            right: 15px;
+            height: 70px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(25px);
+            border-radius: 25px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* App Windows */
+        .app-window {
+            position: absolute;
+            inset: 0;
+            background: #1a1a1a;
+            z-index: 100;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-window.open {
+            transform: translateY(0);
+        }
+
+        .app-header {
+            height: 50px;
+            background: rgba(30,30,30,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 30px;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .app-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        /* Control Center */
+        .control-center {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(20px);
+            z-index: 400;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 50px 20px 100px;
+            overflow-y: auto;
+        }
+
+        .control-center.open {
+            transform: translateY(0);
+        }
+
+        .cc-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .cc-box {
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 15px;
+            aspect-ratio: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .cc-box:active {
+            transform: scale(0.95);
+        }
+
+        .cc-box.active {
+            background: rgba(255,255,255,0.25);
+        }
+
+        .cc-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .cc-box.active .cc-icon {
+            background: white;
+            color: #000;
+        }
+
+        .cc-label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .cc-slider {
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 20px;
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        .cc-slider-icon {
+            font-size: 30px;
+            z-index: 10;
+        }
+
+        .cc-slider-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60%;
+            background: rgba(255,255,255,0.2);
+            border-radius: 0 0 20px 20px;
+        }
+
+        .cc-toggles {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .cc-toggle {
+            aspect-ratio: 1;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .cc-toggle.active {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .cc-toggle:active {
+            transform: scale(0.9);
+        }
+
+        /* Navigation Bar */
+        .nav-bar {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 135px;
+            height: 5px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 3px;
+            z-index: 1000;
+            cursor: pointer;
+        }
+
+        .nav-bar-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            opacity: 0;
+            transition: 0.3s;
+            white-space: nowrap;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .app-open .nav-bar-hint {
+            opacity: 1;
+        }
+
+        /* Swipe Indicator */
+        .swipe-indicator {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            z-index: 999;
+            touch-action: none;
+        }
+
+        /* Toast */
+        .toast {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: rgba(0,0,0,0.8);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 13px;
+            z-index: 2000;
+            transition: 0.3s;
+            opacity: 0;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* Modal */
+        .modal {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 300;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1c1c1e;
+            border-radius: 20px;
+            width: 100%;
+            padding: 20px;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .color-opt {
+            aspect-ratio: 1;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+        }
+
+        .color-opt.selected {
+            border-color: white;
+        }
+
+        /* Settings App */
+        .settings-list {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .settings-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .settings-item:active {
+            background: rgba(255,255,255,0.1);
+        }
+
+        .toggle-switch {
+            width: 50px;
+            height: 28px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 14px;
+            position: relative;
+            transition: 0.3s;
+        }
+
+        .toggle-switch.on {
+            background: #34c759;
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: 0.3s;
+        }
+
+        .toggle-switch.on::after {
+            left: 24px;
+        }
+
+        /* Calculator */
+        .calc-display {
+            font-size: 56px;
+            text-align: right;
+            padding: 20px;
+            margin-bottom: 10px;
+            min-height: 80px;
+            word-wrap: break-word;
+        }
+
+        .calc-pad {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .calc-btn {
+            aspect-ratio: 1;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 26px;
+            cursor: pointer;
+        }
+
+        .calc-btn:active {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .calc-btn.op {
+            background: #ff9f0a;
+        }
+
+        .calc-btn.fn {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .calc-btn.wide {
+            grid-column: span 2;
+            aspect-ratio: auto;
+            border-radius: 35px;
+        }
+
+        /* Flash effect */
+        .flash {
+            position: absolute;
+            inset: 0;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9999;
+            transition: opacity 0.1s;
+        }
+
+        /* Hide scrollbars */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone-frame">
+        <div class="side-button volume-up"></div>
+        <div class="side-button volume-down"></div>
+        <div class="side-button power-button" onclick="toggleLock()"></div>
+        
+        <div class="screen" id="screen">
+            <div class="flash" id="flash"></div>
+            
+            <!-- Notch -->
+            <div class="notch">
+                <div class="notch-camera"></div>
+                <div class="notch-speaker"></div>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <div class="status-left">
+                    <span id="status-time">9:41</span>
+                </div>
+                <div class="status-right">
+                    <div class="signal-bars">
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                        <div class="bar"></div>
+                    </div>
+                    <span>5G</span>
+                    <div class="battery">
+                        <div class="battery-fill"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lock Screen -->
+            <div class="lock-screen" id="lockScreen">
+                <div class="lock-icon">🔒</div>
+                <div class="lock-time" id="lockTime">9:41</div>
+                <div class="lock-date" id="lockDate">Thursday, February 26</div>
+                
+                <div class="fingerprint-area" id="fingerprintBtn" onclick="scanFingerprint()">
+                    👆
+                    <span class="fingerprint-text">Touch to unlock</span>
+                </div>
+                
+                <button class="password-btn" onclick="showPassword()">Use Password</button>
+            </div>
+
+            <!-- Password Screen -->
+            <div class="password-screen" id="passwordScreen">
+                <div class="password-title">Enter Passcode</div>
+                <div class="password-dots" id="passwordDots">
+                    <div class="password-dot"></div>
+                    <div class="password-dot"></div>
+                    <div class="password-dot"></div>
+                    <div class="password-dot"></div>
+                </div>
+                <div class="password-pad" id="passwordPad"></div>
+                <div class="password-cancel" onclick="hidePassword()">Cancel</div>
+            </div>
+
+            <!-- Control Center -->
+            <div class="control-center" id="controlCenter" onclick="if(event.target===this)toggleControlCenter()">
+                <div class="cc-grid">
+                    <div class="cc-box active" onclick="toggleCC(this, 'airplane')">
+                        <div class="cc-icon">✈️</div>
+                        <span class="cc-label">Airplane</span>
+                    </div>
+                    <div class="cc-box" onclick="toggleCC(this, 'wifi')">
+                        <div class="cc-icon">📶</div>
+                        <span class="cc-label">Wi-Fi</span>
+                    </div>
+                </div>
+                
+                <div class="cc-slider">
+                    <div class="cc-slider-fill"></div>
+                    <span class="cc-slider-icon">☀️</span>
+                </div>
+                
+                <div class="cc-slider">
+                    <div class="cc-slider-fill" style="height: 40%;"></div>
+                    <span class="cc-slider-icon">🔊</span>
+                </div>
+
+                <div class="cc-toggles">
+                    <div class="cc-toggle active" onclick="toggleCCToggle(this)">🔦</div>
+                    <div class="cc-toggle" onclick="toggleCCToggle(this)">⏱️</div>
+                    <div class="cc-toggle" onclick="toggleCCToggle(this)">📷</div>
+                    <div class="cc-toggle" onclick="toggleCCToggle(this)">🔔</div>
+                </div>
+            </div>
+
+            <!-- Home Screen -->
+            <div class="home-screen" id="homeScreen">
+                <div class="home-time" id="homeTime" style="font-size: 48px; font-weight: 200;">9:41</div>
+                <div class="home-date" id="homeDate">Thursday, February 26</div>
+
+                <div class="widget weather-widget">
+                    <div class="weather-temp">72°</div>
+                    <div class="weather-info">
+                        <div>☀️ Sunny</div>
+                        <div style="font-size: 12px; opacity: 0.7;">Cupertino</div>
+                    </div>
+                </div>
+
+                <div class="app-grid" id="appGrid">
+                    <div class="app-icon" onclick="openApp('settings')">
+                        <div class="icon-box" style="background: linear-gradient(135deg, #8e8e93, #636366);" data-app="settings">
+                            ⚙️
+                            <span class="edit-badge" onclick="event.stopPropagation(); customize('settings')">✎</span>
+                        </div>
+                        <span class="app-label">Settings</span>
+                    </div>
+                    <div class="app-icon" onclick="openApp('camera')">
+                        <div class="icon-box" style="background: linear-gradient(135deg, #ff375f, #ff2d55);" data-app="camera">
+                            📷
+                            <span class="edit-badge" onclick="event.stopPropagation(); customize('camera')">✎</span>
+                        </div>
+                        <span class="app-label">Camera</span>
+                    </div>
+                    <div class="app-icon" onclick="openApp('photos')">
+                        <div class="icon-box" style="background: linear-gradient(135deg, #5856d6, #af52de);" data-app="photos">
+                            🖼️
+                            <span class="edit-badge" onclick="event.stopPropagation(); customize('photos')">✎</span>
+                        </div>
+                        <span class="app-label">Photos</span>
+                    </div>
+                    <div class="app-icon" onclick="openApp('calc')">
+                        <div class="icon-box" style="background: linear-gradient(135deg, #ff9500, #ff6b00);" data-app="calc">
+                            🧮
+                            <span class="edit-badge" onclick="event.stopPropagation(); customize('calc')">✎</span>
+                        </div>
+                        <span class="app-label">Calc</span>
+                    </div>
+                    <div class="app-icon" onclick="openApp('browser')">
+                        <div class="icon-box" style="background: linear-gradient(135deg, #007aff, #5856d6);" data-app="browser">
+                            🌐
+                            <span class="edit-badge" onclick="event.stopPropagation(); customize('browser')">✎</span>
+                        </div>
+                        <span class="app-label">Browser</span>
+                    </div>
+                    <div class="app-icon" onclick="openApp('clock')">
+                        <div class="icon-box" style="background: linear-gradient(135deg, #000, #434343);" data-app="clock">
+                            🕐
+                            <span class="edit-badge" onclick="event.stopPropagation(); customize('clock')">✎</span>
+                        </div>
+                        <span class="app-label">Clock</span>
+                    </div>
+                    <div class="app-icon" onclick="openApp('mail')">
+                        <div class="icon-box" style="background: linear-gradient(135deg, #34c759, #30d158);" data-app="mail">
+                            ✉️
+                            <span class="edit-badge" onclick="event.stopPropagation(); customize('mail')">✎</span>
+                        </div>
+                        <span class="app-label">Mail</span>
+                    </div>
+                    <div class="app-icon" onclick="openApp('music')">
+                        <div class="icon-box" style="background: linear-gradient(135deg, #ff2d55, #ff375f);" data-app="music">
+                            🎵
+                            <span class="edit-badge" onclick="event.stopPropagation(); customize('music')">✎</span>
+                        </div>
+                        <span class="app-label">Music</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dock -->
+            <div class="dock">
+                <div class="app-icon" onclick="openApp('phone')">
+                    <div class="icon-box" style="background: linear-gradient(135deg, #34c759, #30d158);">📞</div>
+                </div>
+                <div class="app-icon" onclick="openApp('messages')">
+                    <div class="icon-box" style="background: linear-gradient(135deg, #34c759, #30d158);">💬</div>
+                </div>
+                <div class="app-icon" onclick="openApp('browser')">
+                    <div class="icon-box" style="background: linear-gradient(135deg, #007aff, #5856d6);">🌐</div>
+                </div>
+                <div class="app-icon" onclick="openApp('music')">
+                    <div class="icon-box" style="background: linear-gradient(135deg, #ff2d55, #ff375f);">🎵</div>
+                </div>
+            </div>
+
+            <!-- App Windows -->
+            <div class="app-window" id="app-settings">
+                <div class="app-header">Settings</div>
+                <div class="app-content">
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-size: 12px; text-transform: uppercase; opacity: 0.6; margin-bottom: 8px; padding-left: 10px;">General</div>
+                        <div class="settings-list">
+                            <div class="settings-item" onclick="toggleSetting(this)">
+                                <span>✈️ Airplane Mode</span>
+                                <div class="toggle-switch"></div>
+                            </div>
+                            <div class="settings-item" onclick="toggleSetting(this)">
+                                <span>📶 Wi-Fi</span>
+                                <div class="toggle-switch on"></div>
+                            </div>
+                            <div class="settings-item" onclick="toggleSetting(this)">
+                                <span>📡 Bluetooth</span>
+                                <div class="toggle-switch on"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-size: 12px; text-transform: uppercase; opacity: 0.6; margin-bottom: 8px; padding-left: 10px;">Security</div>
+                        <div class="settings-list">
+                            <div class="settings-item" onclick="toggleEdit()">
+                                <span>🔒 Change Password</span>
+                                <span>›</span>
+                            </div>
+                            <div class="settings-item" onclick="toggleEditMode()">
+                                <span>✏️ Edit Home Screen</span>
+                                <span>›</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="font-size: 12px; text-transform: uppercase; opacity: 0.6; margin-bottom: 8px; padding-left: 10px;">System</div>
+                        <div class="settings-list">
+                            <div class="settings-item" onclick="location.reload()">
+                                <span>↺ Reset NeonOS</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="app-window" id="app-camera">
+                <div style="flex: 1; background: #000; display: flex; flex-direction: column;">
+                    <div style="flex: 1; display: flex; align-items: center; justify-content: center; position: relative;">
+                        <div style="position: absolute; inset: 0; background: linear-gradient(0deg, transparent 24%, rgba(255,255,255,.05) 25%, rgba(255,255,255,.05) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.05) 75%, rgba(255,255,255,.05) 76%, transparent 77%), linear-gradient(90deg, transparent 24%, rgba(255,255,255,.05) 25%, rgba(255,255,255,.05) 26%, transparent 27%, transparent 74%, rgba(255,255,255,.05) 75%, rgba(255,255,255,.05) 76%, transparent 77%); background-size: 50px 50px;"></div>
+                        <div style="width: 80px; height: 80px; border: 2px solid rgba(255,215,0,0.6); border-radius: 4px; animation: pulse 2s infinite;"></div>
+                        <div style="position: absolute; bottom: 80px; display: flex; gap: 20px; font-size: 12px; color: rgba(255,255,255,0.6);">
+                            <span>0.5</span><span style="color: #ffd700;">1x</span><span>3</span>
+                        </div>
+                    </div>
+                    <div style="height: 120px; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; gap: 40px;">
+                        <span style="font-size: 24px;">🖼️</span>
+                        <div style="width: 70px; height: 70px; border: 4px solid white; border-radius: 50%; cursor: pointer;" onclick="takePhoto()">
+                            <div style="width: 100%; height: 100%; border-radius: 50%; border: 2px solid black; background: white; transform: scale(0.9);"></div>
+                        </div>
+                        <span style="font-size: 24px;">🔄</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="app-window" id="app-calc">
+                <div class="app-header">Calculator</div>
+                <div class="app-content" style="background: #000;">
+                    <div class="calc-display" id="calcDisplay">0</div>
+                    <div class="calc-pad">
+                        <button class="calc-btn fn" onclick="calc('C')">AC</button>
+                        <button class="calc-btn fn" onclick="calc('±')">+/-</button>
+                        <button class="calc-btn fn" onclick="calc('%')">%</button>
+                        <button class="calc-btn op" onclick="calc('÷')">÷</button>
+                        <button class="calc-btn" onclick="calc('7')">7</button>
+                        <button class="calc-btn" onclick="calc('8')">8</button>
+                        <button class="calc-btn" onclick="calc('9')">9</button>
+                        <button class="calc-btn op" onclick="calc('×')">×</button>
+                        <button class="calc-btn" onclick="calc('4')">4</button>
+                        <button class="calc-btn" onclick="calc('5')">5</button>
+                        <button class="calc-btn" onclick="calc('6')">6</button>
+                        <button class="calc-btn op" onclick="calc('-')">−</button>
+                        <button class="calc-btn" onclick="calc('1')">1</button>
+                        <button class="calc-btn" onclick="calc('2')">2</button>
+                        <button class="calc-btn" onclick="calc('3')">3</button>
+                        <button class="calc-btn op" onclick="calc('+')">+</button>
+                        <button class="calc-btn wide" onclick="calc('0')">0</button>
+                        <button class="calc-btn" onclick="calc('.')">.</button>
+                        <button class="calc-btn op" onclick="calc('=')">=</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="app-window" id="app-browser">
+                <div class="app-header">Browser</div>
+                <div class="app-content">
+                    <div style="background: rgba(255,255,255,0.1); padding: 10px; border-radius: 10px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        <span>🔒</span>
+                        <span style="flex: 1; opacity: 0.7;">neonos.com</span>
+                        <span>↻</span>
+                    </div>
+                    <div style="background: white; color: #333; padding: 20px; border-radius: 15px; min-height: 300px;">
+                        <h2 style="margin-bottom: 15px;">NeonOS 2.5</h2>
+                        <p style="line-height: 1.6; margin-bottom: 10px;">Welcome to the most advanced web-based mobile OS.</p>
+                        <p style="line-height: 1.6;">Features: Fingerprint security, Control Center, customizable home screen, and fully functional apps.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="app-window" id="app-photos">
+                <div class="app-header">Photos</div>
+                <div class="app-content" style="padding: 2px;">
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px;" id="photoGrid"></div>
+                </div>
+            </div>
+
+            <div class="app-window" id="app-clock">
+                <div class="app-header">Clock</div>
+                <div class="app-content" style="text-align: center; padding-top: 40px;">
+                    <div style="font-size: 56px; font-weight: 200; margin-bottom: 10px;" id="appClockTime">9:41</div>
+                    <div style="opacity: 0.7; margin-bottom: 40px;" id="appClockDate">Thursday, February 26</div>
+                    <div style="display: flex; justify-content: center; gap: 40px;">
+                        <div>⏰<br><small>Alarm</small></div>
+                        <div>⏱️<br><small>Stopwatch</small></div>
+                        <div>⏲️<br><small>Timer</small></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="app-window" id="app-mail"><div class="app-header">Mail</div><div class="app-content" style="display: flex; align-items: center; justify-content: center; flex-direction: column;"><div style="font-size: 64px; margin-bottom: 20px;">✉️</div><div style="opacity: 0.6;">No new mail</div></div></div>
+            <div class="app-window" id="app-music"><div class="app-header">Music</div><div class="app-content" style="display: flex; flex-direction: column; align-items: center; justify-content: center;"><div style="width: 140px; height: 140px; background: linear-gradient(135deg, #ff2d55, #ff375f); border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 64px; margin-bottom: 20px;">🎵</div><div>Not Playing</div><div style="margin-top: 20px; font-size: 24px;">⏮ ▶ ⏭</div></div></div>
+            <div class="app-window" id="app-phone"><div class="app-header">Phone</div><div class="app-content" style="display: flex; align-items: center; justify-content: center;"><div style="font-size: 64px;">📞</div></div></div>
+            <div class="app-window" id="app-messages"><div class="app-header">Messages</div><div class="app-content" style="display: flex; align-items: center; justify-content: center;"><div style="font-size: 64px;">💬</div></div></div>
+
+            <!-- Customization Modal -->
+            <div class="modal" id="customizeModal" onclick="if(event.target===this)closeModal()">
+                <div class="modal-content">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <b>Edit Icon</b>
+                        <span onclick="closeModal()" style="cursor: pointer; font-size: 20px;">×</span>
+                    </div>
+                    <div style="font-size: 12px; opacity: 0.6; margin-bottom: 10px;">Color</div>
+                    <div class="color-grid" id="colorGrid"></div>
+                    <div style="font-size: 12px; opacity: 0.6; margin-bottom: 10px;">Icon</div>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;" id="iconGrid"></div>
+                </div>
+            </div>
+
+            <!-- Toast -->
+            <div class="toast" id="toast">Notification</div>
+
+            <!-- Swipe Area -->
+            <div class="swipe-indicator" id="swipeArea"></div>
+            
+            <!-- Navigation -->
+            <div class="nav-bar-hint" id="navHint">Swipe up to close</div>
+            <div class="nav-bar" id="navBar"></div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let isLocked = true;
+        let currentApp = null;
+        let editMode = false;
+        let customApp = null;
+        let password = '';
+        const correctPassword = '2580';
+        let calcValue = '0';
+        let calcOp = null;
+        let calcFirst = null;
+        let touchStartY = 0;
+        let touchStartTime = 0;
+
+        // Colors and icons
+        const colors = [
+            'linear-gradient(135deg, #8e8e93, #636366)',
+            'linear-gradient(135deg, #ff375f, #ff2d55)',
+            'linear-gradient(135deg, #5856d6, #af52de)',
+            'linear-gradient(135deg, #ff9500, #ff6b00)',
+            'linear-gradient(135deg, #007aff, #5856d6)',
+            'linear-gradient(135deg, #34c759, #30d158)',
+            'linear-gradient(135deg, #000, #434343)',
+            'linear-gradient(135deg, #ff2d55, #ff375f)',
+            'linear-gradient(135deg, #5ac8fa, #007aff)',
+            'linear-gradient(135deg, #af52de, #5856d6)'
+        ];
+        const icons = ['⚙️','📷','🖼️','🧮','🌐','🕐','✉️','🎵','📞','💬','🏠','❤️','🔥','⚡','🎮','💼'];
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            updateTime();
+            setInterval(updateTime, 1000);
+            initPasswordPad();
+            initPhotos();
+            initModal();
+            setupSwipe();
+        });
+
+        function updateTime() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2,'0');
+            const m = String(now.getMinutes()).padStart(2,'0');
+            const time = h + ':' + m;
+            
+            document.getElementById('lockTime').textContent = time;
+            document.getElementById('status-time').textContent = time;
+            document.getElementById('homeTime').textContent = time;
+            document.getElementById('appClockTime').textContent = time;
+            
+            const date = now.toLocaleDateString('en-US', {weekday: 'long', month: 'long', day: 'numeric'});
+            document.getElementById('lockDate').textContent = date;
+            document.getElementById('homeDate').textContent = date;
+            document.getElementById('appClockDate').textContent = date;
+        }
+
+        function initPasswordPad() {
+            const pad = document.getElementById('passwordPad');
+            const keys = ['1','2','3','4','5','6','7','8','9','','0','⌫'];
+            keys.forEach((key, i) => {
+                if (key === '') {
+                    pad.innerHTML += '<div></div>';
+                } else {
+                    const div = document.createElement('div');
+                    div.className = 'password-key';
+                    div.textContent = key;
+                    if (key === '⌫') {
+                        div.onclick = () => deletePassword();
+                    } else {
+                        div.onclick = () => enterPassword(key);
+                    }
+                    pad.appendChild(div);
+                }
+            });
+        }
+
+        function initPhotos() {
+            const grid = document.getElementById('photoGrid');
+            for(let i = 0; i < 18; i++) {
+                const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a', '#ffecd2'];
+                grid.innerHTML += `<div style="aspect-ratio: 1; background: ${colors[i % colors.length]};" onclick="showToast('Photo ${i+1}')"></div>`;
+            }
+        }
+
+        function initModal() {
+            const colorGrid = document.getElementById('colorGrid');
+            colors.forEach((c, i) => {
+                colorGrid.innerHTML += `<div class="color-opt ${i===0?'selected':''}" style="background: ${c}" onclick="selectColor(this, '${c}')"></div>`;
+            });
+            
+            const iconGrid = document.getElementById('iconGrid');
+            icons.forEach((icon, i) => {
+                iconGrid.innerHTML += `<div style="aspect-ratio: 1; background: rgba(255,255,255,0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; border: 2px solid transparent;" onclick="selectIcon('${icon}', this)">${icon}</div>`;
+            });
+        }
+
+        // Security
+        function scanFingerprint() {
+            const btn = document.getElementById('fingerprintBtn');
+            btn.classList.add('scanning');
+            setTimeout(() => {
+                btn.classList.remove('scanning');
+                btn.classList.add('success');
+                setTimeout(() => {
+                    unlock();
+                }, 300);
+            }, 1500);
+        }
+
+        function showPassword() {
+            document.getElementById('passwordScreen').classList.add('show');
+            password = '';
+            updatePasswordDots();
+        }
+
+        function hidePassword() {
+            document.getElementById('passwordScreen').classList.remove('show');
+            password = '';
+        }
+
+        function enterPassword(digit) {
+            if (password.length < 4) {
+                password += digit;
+                updatePasswordDots();
+                if (password.length === 4) {
+                    setTimeout(() => {
+                        if (password === correctPassword) {
+                            hidePassword();
+                            unlock();
+                        } else {
+                            showToast('Wrong passcode');
+                            password = '';
+                            updatePasswordDots();
+                        }
+                    }, 200);
+                }
+            }
+        }
+
+        function deletePassword() {
+            password = password.slice(0, -1);
+            updatePasswordDots();
+        }
+
+        function updatePasswordDots() {
+            const dots = document.querySelectorAll('.password-dot');
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('filled', i < password.length);
+            });
+        }
+
+        function unlock() {
+            isLocked = false;
+            document.getElementById('lockScreen').classList.add('unlocked');
+            setTimeout(() => {
+                document.getElementById('homeScreen').classList.add('active');
+            }, 300);
+        }
+
+        function toggleLock() {
+            if (!isLocked) {
+                isLocked = true;
+                document.getElementById('homeScreen').classList.remove('active');
+                document.getElementById('lockScreen').classList.remove('unlocked');
+                closeAllApps();
+                document.getElementById('fingerprintBtn').classList.remove('success');
+            }
+        }
+
+        // Swipe Navigation
+        function setupSwipe() {
+            const navBar = document.getElementById('navBar');
+            const swipeArea = document.getElementById('swipeArea');
+            
+            const handleStart = (y) => {
+                touchStartY = y;
+                touchStartTime = Date.now();
+            };
+            
+            const handleMove = (y) => {
+                if (!currentApp) return;
+                const diff = touchStartY - y;
+                if (diff > 0) {
+                    // Visual feedback could go here
+                }
+            };
+            
+            const handleEnd = (y) => {
+                const diff = touchStartY - y;
+                const duration = Date.now() - touchStartTime;
+                
+                // Swipe up more than 50px or fast swipe
+                if (diff > 50 || (diff > 30 && duration < 200)) {
+                    if (currentApp) {
+                        goHome();
+                    } else if (!isLocked && !document.getElementById('controlCenter').classList.contains('open')) {
+                        // Open control center from home
+                        if (diff > 100) {
+                            toggleControlCenter();
+                        }
+                    }
+                }
+            };
+            
+            // Nav bar swipe
+            navBar.addEventListener('touchstart', (e) => handleStart(e.touches[0].clientY));
+            navBar.addEventListener('touchmove', (e) => handleMove(e.touches[0].clientY));
+            navBar.addEventListener('touchend', (e) => handleEnd(e.changedTouches[0].clientY));
+            
+            // Full screen swipe area
+            swipeArea.addEventListener('touchstart', (e) => handleStart(e.touches[0].clientY));
+            swipeArea.addEventListener('touchmove', (e) => handleMove(e.touches[0].clientY));
+            swipeArea.addEventListener('touchend', (e) => handleEnd(e.changedTouches[0].clientY));
+            
+            // Mouse support for desktop testing
+            navBar.addEventListener('mousedown', (e) => handleStart(e.clientY));
+            navBar.addEventListener('mouseup', (e) => handleEnd(e.clientY));
+        }
+
+        // App Management
+        function openApp(app) {
+            if (editMode && event.target.classList.contains('edit-badge')) return;
+            if (isLocked) return;
+            
+            currentApp = app;
+            document.getElementById('app-' + app).classList.add('open');
+            document.getElementById('screen').classList.add('app-open');
+            document.getElementById('dock').style.opacity = '0';
+        }
+
+        function goHome() {
+            if (!currentApp) {
+                document.getElementById('controlCenter').classList.remove('open');
+                return;
+            }
+            
+            document.getElementById('app-' + currentApp).classList.remove('open');
+            document.getElementById('screen').classList.remove('app-open');
+            document.getElementById('dock').style.opacity = '1';
+            currentApp = null;
+        }
+
+        function closeAllApps() {
+            document.querySelectorAll('.app-window').forEach(app => app.classList.remove('open'));
+            document.getElementById('screen').classList.remove('app-open');
+            document.getElementById('dock').style.opacity = '1';
+            document.getElementById('controlCenter').classList.remove('open');
+            currentApp = null;
+        }
+
+        // Control Center
+        function toggleControlCenter() {
+            if (isLocked) return;
+            document.getElementById('controlCenter').classList.toggle('open');
+        }
+
+        function toggleCC(el, type) {
+            el.classList.toggle('active');
+            showToast(type + ' ' + (el.classList.contains('active') ? 'On' : 'Off'));
+        }
+
+        function toggleCCToggle(el) {
+            el.classList.toggle('active');
+        }
+
+        // Settings
+        function toggleSetting(el) {
+            const toggle = el.querySelector('.toggle-switch');
+            toggle.classList.toggle('on');
+            const label = el.querySelector('span').textContent;
+            showToast(label + ' ' + (toggle.classList.contains('on') ? 'On' : 'Off'));
+        }
+
+        function toggleEditMode() {
+            editMode = !editMode;
+            document.body.classList.toggle('edit-mode');
+            showToast(editMode ? 'Edit mode on - Tap ✎ to customize' : 'Edit mode off');
+            goHome();
+        }
+
+        // Customization
+        function customize(app) {
+            customApp = app;
+            document.getElementById('customizeModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('customizeModal').classList.remove('show');
+            customApp = null;
+        }
+
+        function selectColor(el, color) {
+            document.querySelectorAll('.color-opt').forEach(c => c.classList.remove('selected'));
+            el.classList.add('selected');
+            if (customApp) {
+                document.querySelector(`[data-app="${customApp}"]`).style.background = color;
+            }
+        }
+
+        function selectIcon(icon, el) {
+            if (customApp) {
+                const box = document.querySelector(`[data-app="${customApp}"]`);
+                const badge = box.querySelector('.edit-badge');
+                box.innerHTML = icon;
+                if (badge) box.appendChild(badge);
+                closeModal();
+                showToast('Icon updated');
+            }
+        }
+
+        // Calculator
+        function calc(key) {
+            if (key === 'C') {
+                calcValue = '0';
+                calcOp = null;
+                calcFirst = null;
+            } else if (key === '=') {
+                if (calcOp && calcFirst !== null) {
+                    const second = parseFloat(calcValue);
+                    const first = parseFloat(calcFirst);
+                    switch(calcOp) {
+                        case '+': calcValue = String(first + second); break;
+                        case '-': calcValue = String(first - second); break;
+                        case '×': calcValue = String(first * second); break;
+                        case '÷': calcValue = String(first / second); break;
+                    }
+                    calcOp = null;
+                    calcFirst = null;
+                }
+            } else if ('+-×÷'.includes(key)) {
+                calcFirst = calcValue;
+                calcOp = key;
+            } else if (key === '±') {
+                calcValue = String(parseFloat(calcValue) * -1);
+            } else if (key === '%') {
+                calcValue = String(parseFloat(calcValue) / 100);
+            } else {
+                if (calcValue === '0' || calcValue === calcFirst) calcValue = '';
+                if (calcValue.length < 9) calcValue += key;
+            }
+            document.getElementById('calcDisplay').textContent = calcValue.substring(0,9);
+        }
+
+        // Camera
+        function takePhoto() {
+            const flash = document.getElementById('flash');
+            flash.style.opacity = '1';
+            setTimeout(() => flash.style.opacity = '0', 100);
+            showToast('Photo captured');
+        }
+
+        // Toast
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        // Prevent zoom
+        document.addEventListener('gesturestart', e => e.preventDefault());
+        document.addEventListener('dblclick', e => e.preventDefault());
+    </script>
+</body>
+</html>
